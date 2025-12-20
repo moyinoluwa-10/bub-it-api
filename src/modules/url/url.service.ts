@@ -25,8 +25,6 @@ function baseUrlOrThrow(): string {
 }
 
 function validateLongUrlOrThrow(longUrl: string) {
-  console.log("long url", longUrl);
-
   if (!longUrl || !validUrl.isWebUri(longUrl)) {
     throw new BadRequestError("Invalid long URL");
   }

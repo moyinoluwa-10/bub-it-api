@@ -69,8 +69,8 @@ export const logout = catchAsync(
   async (req: AuthenticatedRequest, res: Response) => {
     await authService.logout(req);
 
-    res.cookie("accessToken", "", cookiesConfig(0));
-    res.cookie("refreshToken", "", cookiesConfig(0));
+    res.cookie("accessToken", "loggedOut", cookiesConfig(1000));
+    res.cookie("refreshToken", "loggedOut", cookiesConfig(1000));
 
     sendResponse(res, StatusCodes.OK, {
       success: true,

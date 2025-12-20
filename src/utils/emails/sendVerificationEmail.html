@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Verify your email address</title>
     <style>
       * {
         margin: 0;
@@ -20,7 +20,7 @@
         line-height: 1.5;
       }
 
-      main {
+      .main-container {
         width: 100%;
         margin: 50px auto;
         max-width: 600px;
@@ -85,7 +85,7 @@
       }
 
       @media screen and (max-width: 480px) {
-        main {
+        .main-container {
           padding: 30px 20px;
         }
 
@@ -98,22 +98,24 @@
   </head>
   <body>
     <main>
-      <div class="image-container">
-        <img
-          src="https://res.cloudinary.com/dapwu9k1x/image/upload/v1687829041/logo_sljrbh.png"
-          alt=""
-        />
-      </div>
-      <div class="content-container">
-        <h3 class="heading-1">Thanks for signing up</h3>
-        <h3 class="heading-2">Verify your email address</h3>
-        <p class="paragraph">
-          Click the button below to verify your email address.
-        </p>
-        <div>
-          <a href="">
-            <button>Verify Email now</button>
-          </a>
+      <div class="main-container">
+        <div class="image-container">
+          <img
+            src="https://res.cloudinary.com/dapwu9k1x/image/upload/v1687829041/logo_sljrbh.png"
+            alt=""
+          />
+        </div>
+        <div class="content-container">
+          <h3 class="heading-1">Thanks for signing up</h3>
+          <h3 class="heading-2">Verify your email address</h3>
+          <p class="paragraph">
+            Click the button below to verify your email address.
+          </p>
+          <div>
+            <a href="${verificationLink}">
+              <button>Verify Email now</button>
+            </a>
+          </div>
         </div>
       </div>
     </main>

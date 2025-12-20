@@ -87,8 +87,6 @@ export const authService = {
 
     const verificationToken = crypto.randomBytes(70).toString("hex");
     const verificationTokenHash = await hashValue(verificationToken);
-    console.log(verificationToken);
-    console.log(verificationTokenHash);
 
     user.verificationToken = verificationTokenHash;
     await user.save();

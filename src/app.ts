@@ -16,6 +16,7 @@ import { urlRouter } from "./modules/url/url.routes";
 import { userRouter } from "./modules/user/user.routes";
 import { mongoSanitize } from "./middleware/mongoSanitize";
 import { redirectRouter } from "./modules/redirect/redirect.routes";
+import { StatusCodes } from "http-status-codes";
 
 function getHost(input: string): string {
   if (!input) return "";
@@ -40,11 +41,7 @@ export const createApp = (): Application => {
     })
   );
 
-  const allowedOrigins = [
-    env.FRONTEND_URL,
-    env.FRONTEND_DEV_URL,
-    env.REDIRECT_URL,
-  ].filter(Boolean);
+  const allowedOrigins = [env.FRONTEND_URL].filter(Boolean);
   const corsOptions = {
     origin(
       origin: string | undefined,
@@ -78,18 +75,22 @@ export const createApp = (): Application => {
   app.use(compression());
   app.use(express.static(path.resolve(process.cwd(), "public")));
   app.use(cookieParser(env.JWT_SECRET));
-  app.use("/api", rateLimiter);
-
   if (isProd) {
     app.use((req, res, next) => {
       const host = (req.hostname || "").toLowerCase();
       if (host === getHost(env.REDIRECT_URL))
         return redirectRouter(req, res, next);
-      next();
+      if (host === getHost(env.API_URL)) return next();
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        success: false,
+        message: "Invalid host header",
+      });
     });
   } else {
     app.use("/r", redirectRouter);
   }
+
+  app.use("/api", rateLimiter);
 
   //  Route handlers
   app.use("/api/auth", authRouter);

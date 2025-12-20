@@ -8,7 +8,6 @@ import { sendResponse } from "../../utils/sendResponse";
 export const createUrl = catchAsync(
   async (req: AuthenticatedRequest, res: Response) => {
     const { longUrl, custom } = req.body ?? {};
-    console.log("body", req.body);
 
     const result = await urlService.createUrl({
       longUrl,
