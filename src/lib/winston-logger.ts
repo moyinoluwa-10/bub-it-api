@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import winston from "winston";
-import "winston-loggly-bulk";
+import { Loggly } from "winston-loggly-bulk";
 import { env } from "../config/env";
 
 // Prefer env/config over hardcoding secrets
@@ -38,12 +38,10 @@ const logger = winston.createLogger({
 
 // ---- Production: Loggly (only if fully configured) ----
 if (isProd && LOGGLY_TOKEN && LOGGLY_SUBDOMAIN) {
-  const LogglyTransport = (winston.transports as any).Loggly;
-
   logger.add(
-    new LogglyTransport({
+    new Loggly({
       level: "info",
-      inputToken: LOGGLY_TOKEN,
+      token: LOGGLY_TOKEN,
       subdomain: LOGGLY_SUBDOMAIN,
       tags: LOGGLY_TAGS,
       json: true,
@@ -52,9 +50,9 @@ if (isProd && LOGGLY_TOKEN && LOGGLY_SUBDOMAIN) {
 
   // Optional: send exceptions/rejections to Loggly too
   logger.exceptions.handle(
-    new LogglyTransport({
+    new Loggly({
       level: "error",
-      inputToken: LOGGLY_TOKEN,
+      token: LOGGLY_TOKEN,
       subdomain: LOGGLY_SUBDOMAIN,
       tags: [...LOGGLY_TAGS, "exception"],
       json: true,
@@ -62,9 +60,9 @@ if (isProd && LOGGLY_TOKEN && LOGGLY_SUBDOMAIN) {
   );
 
   logger.rejections.handle(
-    new LogglyTransport({
+    new Loggly({
       level: "error",
-      inputToken: LOGGLY_TOKEN,
+      token: LOGGLY_TOKEN,
       subdomain: LOGGLY_SUBDOMAIN,
       tags: [...LOGGLY_TAGS, "rejection"],
       json: true,
