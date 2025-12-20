@@ -7,6 +7,7 @@ type CacheValue = unknown;
 class Cache {
   private client: RedisClientType | null = null;
   private connecting = false;
+  private connected = false;
 
   private isEnabled(): boolean {
     // You can tighten this rule if you want (e.g. require host+port)
@@ -30,7 +31,7 @@ class Cache {
   get enabled() {
     // Common toggle: disable in tests
     if (env.NODE_ENV === "test") return false;
-    return Boolean(env.REDIS_HOST && env.REDIS_PORT);
+    return Boolean(env.REDIS_HOST && env.REDIS_PORT && this.connected);
   }
 
   async connect(): Promise<void> {
@@ -52,19 +53,27 @@ class Cache {
         socket: {
           reconnectStrategy: (retries) => {
             if (retries >= 3) {
-              logger.error("Redis reconnect failed after 10 attempts");
+              logger.error("Redis reconnect failed after 3 attempts");
+              this.connected = false;
               return new Error("Redis reconnect failed");
             }
             const delay = Math.min(1000 * retries, 3000);
             logger.warn("Redis reconnect", { retries, delay });
+
             return delay;
           },
         },
       });
 
-      client.on("connect", () => logger.info("Redis socket connected"));
+      client.on("connect", () => {
+        logger.info("Redis socket connected");
+        this.connected = true;
+      });
       client.on("ready", () => logger.info("Redis ready"));
-      client.on("end", () => logger.warn("Redis connection ended"));
+      client.on("end", () => {
+        logger.warn("Redis connection ended");
+        this.connected = false;
+      });
       client.on("error", (err) => logger.error("Redis error", { err }));
 
       await client.connect();
@@ -129,6 +138,7 @@ class Cache {
     try {
       await this.client.quit();
       this.client = null;
+      this.connected = false;
       logger.info("Redis disconnected");
     } catch (err) {
       logger.error("Error disconnecting Redis", { err });
