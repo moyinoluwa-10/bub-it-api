@@ -17,6 +17,18 @@ import { userRouter } from "./modules/user/user.routes";
 import { mongoSanitize } from "./middleware/mongoSanitize";
 import { redirectRouter } from "./modules/redirect/redirect.routes";
 
+function getHost(input: string): string {
+  if (!input) return "";
+  if (!/^https?:\/\//i.test(input)) return input.toLowerCase();
+  try {
+    return new URL(input).hostname.toLowerCase();
+  } catch {
+    return "";
+  }
+}
+
+const isProd = env.NODE_ENV === "production";
+
 export const createApp = (): Application => {
   const app = express();
 
@@ -68,11 +80,16 @@ export const createApp = (): Application => {
   app.use(cookieParser(env.JWT_SECRET));
   app.use("/api", rateLimiter);
 
-  app.use((req, _res, next) => {
-    const host = (req.hostname || "").toLowerCase();
-    if (host === env.REDIRECT_URL) return app.use("/", redirectRouter);
-    next();
-  });
+  if (isProd) {
+    app.use((req, res, next) => {
+      const host = (req.hostname || "").toLowerCase();
+      if (host === getHost(env.REDIRECT_URL))
+        return redirectRouter(req, res, next);
+      next();
+    });
+  } else {
+    app.use("/r", redirectRouter);
+  }
 
   //  Route handlers
   app.use("/api/auth", authRouter);
@@ -80,7 +97,6 @@ export const createApp = (): Application => {
   app.use("/api/users", userRouter);
 
   app.get("/", (_req, res) => {
-    // res.send('<h1>Bub API</h1><a href="/api-docs">Documentation</a>');
     res.json({
       success: true,
       message: "Welcome to the Bub-It API",

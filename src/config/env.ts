@@ -42,11 +42,10 @@ export const env = {
   REDIS_PORT: Number(getEnv("REDIS_PORT", "6379")),
   REDIS_CACHE_PREFIX: getEnv("REDIS_CACHE_PREFIX", "app"),
   // Logging Configuration
-  LOGGLY_TOKEN: getEnv("LOGGLY_TOKEN"),
-  LOGGLY_SUBDOMAIN: getEnv("LOGGLY_SUBDOMAIN"),
-  LOGGLY_TAGS: getEnv("LOGGLY_TAGS")
-    ? getEnv("LOGGLY_TAGS")
-        .split(",")
+  LOGGLY_TOKEN: process.env.LOGGLY_TOKEN,
+  LOGGLY_SUBDOMAIN: process.env.LOGGLY_SUBDOMAIN,
+  LOGGLY_TAGS: process.env.LOGGLY_TAGS
+    ? process.env.LOGGLY_TAGS.split(",")
         .map((tag) => tag.trim())
         .filter(Boolean)
     : ["loggly"],
