@@ -16,7 +16,7 @@ const URL_CACHE_TTL = env.URL_CACHE_TTL_SECONDS;
 
 function sendPublicHtml(
   res: Response,
-  fileName: "disable.html" | "error.html"
+  fileName: "disable.html" | "error.html",
 ) {
   // public is at repo root
   const filePath = path.resolve(process.cwd(), "public", fileName);
@@ -48,7 +48,7 @@ function getGeoFromHeaders(req: Request) {
 
 export const redirectUrl = async (
   req: Request<RedirectParams>,
-  res: Response
+  res: Response,
 ) => {
   const code = (req.params.urlCode || "").trim();
   if (!code) return sendPublicHtml(res, "error.html");
@@ -83,11 +83,9 @@ export const redirectUrl = async (
     country: geo.country || undefined,
   };
 
-  // 4) Atomic update (avoid race + avoid loading full doc)
-  // - increment click count
-  // - prepend analytics and cap array length
-  await Url.updateOne(
-    { _id: urlDoc._id },
+  // 4) Atomic DB update + canonical result read (avoid stale cache updates)
+  const updatedUrlDoc = await Url.findByIdAndUpdate(
+    urlDoc._id,
     {
       $inc: { noOfClicks: 1 },
       $push: {
@@ -97,23 +95,29 @@ export const redirectUrl = async (
           $slice: ANALYTICS_MAX,
         },
       },
-    }
+    },
+    {
+      new: true,
+      lean: true,
+    },
   );
+
+  if (!updatedUrlDoc) {
+    return sendPublicHtml(res, "error.html");
+  }
 
   // 5) Refresh cache asynchronously (best-effort)
   //    Keep code->doc and id->doc caches in sync.
-  //    Because we used lean, it’s JSON-friendly.
-  urlDoc.noOfClicks = (urlDoc.noOfClicks ?? 0) + 1;
-  urlDoc.analytics = [analytics, ...(urlDoc.analytics ?? [])].slice(
-    0,
-    ANALYTICS_MAX
-  );
-
+  //    Use updated result from DB to avoid stale counter + analytics values.
   await Promise.allSettled([
-    cache.setJson(urlCacheKeyByCode(code), urlDoc, URL_CACHE_TTL),
-    cache.setJson(urlCacheKeyById(String(urlDoc._id)), urlDoc, URL_CACHE_TTL),
+    cache.setJson(urlCacheKeyByCode(code), URL_CACHE_TTL, updatedUrlDoc),
+    cache.setJson(
+      urlCacheKeyById(String(updatedUrlDoc._id)),
+      URL_CACHE_TTL,
+      updatedUrlDoc,
+    ),
   ]);
 
   // 6) Redirect
-  return res.redirect(302, urlDoc.longUrl);
+  return res.redirect(302, updatedUrlDoc.longUrl);
 };

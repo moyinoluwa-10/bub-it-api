@@ -22,7 +22,7 @@ export const createUrl = catchAsync(
         : "ShortURL created successfully",
       data: { url: result.url },
     });
-  }
+  },
 );
 
 export const generateQrcode = catchAsync(
@@ -39,7 +39,7 @@ export const generateQrcode = catchAsync(
       message: "Qrcode already generated",
       data: { qrcode: result.qrcode, url: result.url },
     });
-  }
+  },
 );
 
 export const enableUrl = catchAsync(
@@ -57,7 +57,7 @@ export const enableUrl = catchAsync(
       message: "ShortURL enabled successfully",
       data: { url: result.url },
     });
-  }
+  },
 );
 
 export const disableUrl = catchAsync(
@@ -75,7 +75,7 @@ export const disableUrl = catchAsync(
       message: "ShortURL disabled successfully",
       data: { url: result.url },
     });
-  }
+  },
 );
 
 export const getAllUrls = catchAsync(
@@ -87,7 +87,7 @@ export const getAllUrls = catchAsync(
       message: "All ShortURLs fetched successfully",
       data: { urls: result.urls, count: result.count },
     });
-  }
+  },
 );
 
 export const getAUrl = catchAsync(
@@ -104,7 +104,7 @@ export const getAUrl = catchAsync(
       message: "ShortURL fetched successfully",
       data: { url: result.url },
     });
-  }
+  },
 );
 
 export const getUserUrls = catchAsync(
@@ -117,7 +117,7 @@ export const getUserUrls = catchAsync(
       message: "User ShortURLs fetched successfully",
       data: { urls: result.urls, count: result.count },
     });
-  }
+  },
 );
 
 export const deleteUrl = catchAsync(
@@ -133,5 +133,5 @@ export const deleteUrl = catchAsync(
       success: true,
       message: "ShortURL deleted successfully",
     });
-  }
+  },
 );

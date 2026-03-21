@@ -64,19 +64,27 @@ export function urlDocumentsToBasic(urls: IUrlDocument[]): UrlBasic[] {
 const CACHE_ALL_URLS = "urls";
 const cacheUrlKey = (id: string) => `url:${id}`;
 const cacheUserUrlsKey = (userId: string) => `url:user:${userId}`;
+const cacheUrlCodeKey = (code: string) => `url:code:${code}`;
 
-async function invalidateCaches(opts: { id?: string; userId?: string }) {
+async function invalidateCaches(opts: {
+  id?: string;
+  userId?: string;
+  urlCode?: string;
+  custom?: string;
+}) {
   if (env.NODE_ENV === "test") return;
   const ops: Promise<any>[] = [];
   ops.push(cache.del(CACHE_ALL_URLS));
   if (opts.id) ops.push(cache.del(cacheUrlKey(opts.id)));
   if (opts.userId) ops.push(cache.del(cacheUserUrlsKey(opts.userId)));
+  if (opts.urlCode) ops.push(cache.del(cacheUrlCodeKey(opts.urlCode)));
+  if (opts.custom) ops.push(cache.del(cacheUrlCodeKey(opts.custom)));
   await Promise.allSettled(ops);
 }
 
 export const urlService = {
   async createUrl(
-    input: CreateUrlInput
+    input: CreateUrlInput,
   ): Promise<{ url: UrlBasic; existing: boolean }> {
     const baseUrl = baseUrlOrThrow();
     validateLongUrlOrThrow(input.longUrl);
@@ -114,7 +122,11 @@ export const urlService = {
       active: true,
     });
 
-    await invalidateCaches({ userId: input.user?.userId });
+    await invalidateCaches({
+      userId: input.user?.userId,
+      urlCode,
+      custom,
+    });
 
     return {
       url: urlDocumentToBasic(created),
@@ -123,7 +135,7 @@ export const urlService = {
   },
 
   async generateQrCode(
-    input: GenerateQrInput
+    input: GenerateQrInput,
   ): Promise<{ url: UrlBasic; qrcode: string }> {
     const url = await Url.findById(input.id);
     if (!url) throw new NotFoundError("ShortURL not found");
@@ -146,6 +158,13 @@ export const urlService = {
       await cache.setEx(cacheUrlKey(input.id), 3600, JSON.stringify(url));
     }
 
+    await invalidateCaches({
+      id: input.id,
+      userId: input.requestUser?.userId,
+      urlCode: url.urlCode,
+      custom: url.custom,
+    });
+
     return {
       url: urlDocumentToBasic(url),
       qrcode,
@@ -153,7 +172,7 @@ export const urlService = {
   },
 
   async setActiveState(
-    input: UpdateUrlStateInput
+    input: UpdateUrlStateInput,
   ): Promise<{ active: boolean; url: UrlBasic }> {
     const url = await Url.findById(input.id);
     if (!url) throw new NotFoundError("ShortURL not found");
@@ -166,6 +185,13 @@ export const urlService = {
     if (env.NODE_ENV !== "test") {
       await cache.setEx(cacheUrlKey(input.id), 3600, JSON.stringify(url));
     }
+
+    await invalidateCaches({
+      id: input.id,
+      userId: input.requestUser?.userId,
+      urlCode: url.urlCode,
+      custom: url.custom,
+    });
 
     return {
       active: input.active,
@@ -204,7 +230,7 @@ export const urlService = {
   },
 
   async getById(
-    input: GetByIdInput
+    input: GetByIdInput,
   ): Promise<{ url: UrlBasic; cache: "hit" | "miss" }> {
     const { id } = input;
 
@@ -237,7 +263,7 @@ export const urlService = {
   },
 
   async getUserUrls(
-    userId: string
+    userId: string,
   ): Promise<{ urls: UrlBasic[]; count: number; cache: "hit" | "miss" }> {
     if (!userId) throw new BadRequestError("UserId is required");
 
@@ -277,6 +303,8 @@ export const urlService = {
     await invalidateCaches({
       id: input.id,
       userId: input.requestUser?.userId,
+      urlCode: url.urlCode,
+      custom: url.custom,
     });
 
     return;

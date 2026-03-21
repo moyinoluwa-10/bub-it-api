@@ -38,14 +38,14 @@ export const createApp = (): Application => {
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: "cross-origin" },
-    })
+    }),
   );
 
   const allowedOrigins = [env.FRONTEND_URL].filter(Boolean);
   const corsOptions = {
     origin(
       origin: string | undefined,
-      callback: (err: Error | null, allow?: boolean) => void
+      callback: (err: Error | null, allow?: boolean) => void,
     ) {
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) {
@@ -68,7 +68,7 @@ export const createApp = (): Application => {
   app.use(
     express.json({
       limit: "100kb",
-    })
+    }),
   );
   app.use(mongoSanitize);
   app.use(hpp());
